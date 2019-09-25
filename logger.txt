@@ -1,0 +1,33 @@
+[15:35:37]: Program start
+[15:35:52]: Processing BG Pixels
+[15:35:52]: Calculating Mean
+[15:35:52]: Total different pixels: 424
+[15:35:52]: Mean B: 141.268868
+[15:35:52]: Mean G: 154.839623
+[15:35:52]: Mean R: 171.648585
+[15:35:52]: Calculating Sigma
+[15:35:52]: Variance B: 3106.503182
+[15:35:52]: Variance G: 3300.342204
+[15:35:52]: Variance R: 4668.166602
+[15:35:52]: Covaraince Matrix
+3106.5 3124.69 2913.64
+3124.69 3300.34 3430.16
+2913.64 3430.16 4668.17
+[15:35:52]: Moprhing Mean
+[15:35:52]: Morphing Sigma
+[15:35:52]: Processing FG Pixels
+[15:35:52]: Calculating Mean
+[15:35:52]: Total different pixels: 59
+[15:35:52]: Mean B: 94.542373
+[15:35:52]: Mean G: 145.796610
+[15:35:52]: Mean R: 118.847458
+[15:35:52]: Calculating Sigma
+[15:35:52]: Variance B: 31.366849
+[15:35:52]: Variance G: 29.755243
+[15:35:52]: Variance R: 35.180121
+[15:35:52]: Covaraince Matrix
+31.3668 28.9226 31.5669
+28.9226 29.7552 30.5891
+31.5669 30.5891 35.1801
+[15:35:52]: Moprhing Mean
+[15:35:52]: Morphing Sigma
