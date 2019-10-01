@@ -6,6 +6,7 @@
 #include <opencv2\highgui.hpp>
 #include <opencv2\core.hpp>
 #include <opencv2\imgproc.hpp>
+#include <iomanip>
 #include "Logger.h"
 #include "Mvn.h"
 
@@ -36,13 +37,15 @@ public:
 	std::vector<cv::Point> getFgdPxls() { return fgdPxls; }
 	Mvn getMvn(std::vector<cv::Point> seeds);
 	void processSeeds();
+	bool useMvn = false;
 
 private:
 	void setRectInMask();
 	void setLblsInMask(int flags, cv::Point p, bool isPr);
 	const std::string* winName;
 	const cv::Mat* image;
-	cv::Mat segment;
+	cv::Mat mvn_mask;
+	cv::Mat mvn_result;
 	cv::Mat mask;
 	cv::Mat bgdModel, fgdModel;
 	uchar rectState, lblsState, prLblsState;

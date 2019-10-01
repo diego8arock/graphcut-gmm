@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 	}
 
 	Logger::Instance()->writeToLog("Program start");
-	cv::CommandLineParser parser(argc, argv, "{@input| messi5.jpg |}");
+	cv::CommandLineParser parser(argc, argv, "{@input| |}""{@mvn| |}");
 	help();
 	string filename = parser.get<string>("@input");
 	if (filename.empty())
@@ -55,6 +55,12 @@ int main(int argc, char** argv)
 		cout << "\n Durn, couldn't read image filename " << filename << endl;
 		return 1;
 	}
+	string useMvn = parser.get<string>("@mvn");
+	if (!useMvn.empty()) {
+		if (useMvn.compare("mvn") == 0)
+			gcapp.useMvn = true;
+	}
+
 	const string winName = "image";
 	namedWindow(winName, WINDOW_AUTOSIZE);
 	setMouseCallback(winName, on_mouse, 0);
@@ -74,19 +80,26 @@ int main(int argc, char** argv)
 			gcapp.showImage();
 			break;
 		case 'n':
-			int iterCount = gcapp.getIterCount();
-			cout << "<" << iterCount << "... ";
-			gcapp.processSeeds();
-			//reduce(gcapp.getFgdPxls(), out, 0, REDUCE_AVG);
-			/*int newIterCount = gcapp.nextIter();
-			if (newIterCount > iterCount)
-			{ 
-				gcapp.showImage();
-				cout << iterCount << ">" << endl;
+			if (gcapp.useMvn) 
+			{
+				const double gamma = 50;
+				const double lambda = 9 * gamma;
+				gcapp.processSeeds();
 			}
 			else
-				cout << "rect must be determined>" << endl;*/
-			break;
+			{
+				int iterCount = gcapp.getIterCount();
+				cout << "<" << iterCount << "... ";
+				int newIterCount = gcapp.nextIter();
+				if (newIterCount > iterCount)
+				{
+					gcapp.showImage();
+					cout << iterCount << ">" << endl;
+				}
+				else
+					cout << "rect must be determined>" << endl;
+			}
+			break;			
 		}
 	}
 exit_main:

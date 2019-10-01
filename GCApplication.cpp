@@ -3,6 +3,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace detail;
 
 static void getBinMask(const Mat& comMask, Mat& binMask)
 {
@@ -30,10 +31,14 @@ void GCApplication::setImageAndWinName(const Mat& _image, const std::string& _wi
 	if (_image.empty() || _winName.empty())
 		return;
 	image = &_image;
-	segment = Mat(image->rows, image->cols, CV_8UC3, Scalar(255,255,255));
+	mvn_mask = Mat(image->rows, image->cols, CV_8UC3, Scalar(255,255,255));
+	mvn_result = Mat(image->rows, image->cols, CV_8UC3, Scalar(255, 255, 255));
 	winName = &_winName;
 	mask.create(image->size(), CV_8UC1);
 	reset();
+
+	if(useMvn)
+		rectState = SET;
 }
 void GCApplication::showImage() const
 {
@@ -216,6 +221,7 @@ void GCApplication::processSeeds() {
 
 	int i, j;
 	int countBG = 0, countFG = 0;
+	Vec3b black(0, 0, 0);
 	cout << rows << endl;
 	for (i = 0; i < rows; ++i)
 	{
@@ -226,8 +232,9 @@ void GCApplication::processSeeds() {
 			test << static_cast<double>(value[B_CHANNEL]), static_cast<double>(value[G_CHANNEL]), static_cast<double>(value[R_CHANNEL]);
 			double result1 = mvnBG.pdf(test);
 			double result2 = mvnFG.pdf(test);
+			clog << "BG result: " << setprecision(30) << result1 << " FB result: " << result2 << endl;
 			if (result1 < result2) {
-				segment.at<Vec3b>(i, j) = Vec3b(0,0,0);
+				mvn_mask.at<Vec3b>(i, j) = black;
 				countBG++;
 			}
 			else {
@@ -236,16 +243,29 @@ void GCApplication::processSeeds() {
 
 		}
 
-		if( i % 100 == 0)
+		if (i % 100 == 0)
 			cout << i << endl;
 	}
 
-	cout << countBG << endl;
-	cout << countFG << endl;
+	clog << countBG << endl;
+	clog << countFG << endl;
 
-	imwrite("mod_image.png", segment);
-	imshow("MAsk", segment);
+	imwrite("mask_image.png", mvn_mask);
+	imshow("mask", mvn_mask);
 
+	for (i = 0; i < rows; ++i)
+	{
+		for (j = 0; j < cols; ++j)
+		{
+			if (mvn_mask.at<Vec3b>(i, j) == black) 
+				mvn_result.at<Vec3b>(i, j) = image->at<Vec3b>(i, j);			
+			else			
+				mvn_result.at<Vec3b>(i, j) = black;			
+		}
+	}
+
+	imwrite("result_image.png", mvn_result);
+	imshow("result", mvn_result);	
 }
 
 Mvn GCApplication::getMvn(vector<Point> seeds) {
@@ -356,8 +376,8 @@ double GCApplication::calculateCovariance(vector<Vec3b> pixels, int channel1, in
 		
 	}
 
-	int size = static_cast<int>(pixels.size());
-	return covariance / (size > 1 ? size - 1 : size);
+	double size = static_cast<double>(pixels.size());
+	return covariance / (size - 1);
 
 }
 
@@ -379,10 +399,10 @@ vector<double> GCApplication::calculateVariance(vector<Vec3b> pixels) {
 	
 	}
 
-	int size = static_cast<int>(pixels.size());
-	varianceR /= size;
-	varianceG /= size;
-	varianceB /= size;
+	double size = static_cast<double>(pixels.size());
+	varianceR /= size - 1;
+	varianceG /= size - 1;
+	varianceB /= size-  1;
 
 	vector<double> v(3);
 	v[R_CHANNEL] = varianceR;
@@ -409,7 +429,7 @@ vector<double> GCApplication::calculateMean(vector<Vec3b> pixels) {
 
 	}
 
-	int size = static_cast<int>(pixels.size());
+	double size = static_cast<double>(pixels.size());
 	meanR /= size;
 	meanG /= size;
 	meanB /= size;
@@ -422,3 +442,4 @@ vector<double> GCApplication::calculateMean(vector<Vec3b> pixels) {
 	return v;
 
 }
+
