@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <array>
-
+//http://blog.sarantop.com/notes/mvn
 class Mvn
 {
 public:
@@ -12,6 +12,7 @@ public:
 	Mvn(const Eigen::VectorXd& mu,
 		const Eigen::MatrixXd& s);
 	//~Mvn();
+	//Probability density function
 	double pdf(const Eigen::VectorXd& x) const;
 	//Eigen::VectorXd sample(unsigned int nr_iterations = 20) const;
 	Eigen::VectorXd mean;
