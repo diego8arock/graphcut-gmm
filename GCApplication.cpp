@@ -206,9 +206,21 @@ bool double_equals(double a, double b, double epsilon = 0.001)
 	return std::abs(a - b) < epsilon;
 }
 
+int compareValues3(double result1, double result2, double result3) {
+
+	if (result1 > result2 && result1 > result3)
+		return 1;
+
+	if (result2 > result1 && result2 > result3)
+		return 2;
+
+	return 3;
+
+}
+
 void GCApplication::processSeeds() {
 
-	Mvn mvnBG, mvnFG;
+	Mvn mvnBG, mvnFG, mvnFG2;
 
 	Logger::Instance()->writeToLog("Processing BG Pixels");
 	mvnBG = getMvn(bgdPxls);
@@ -216,12 +228,17 @@ void GCApplication::processSeeds() {
 	Logger::Instance()->writeToLog("Processing FG Pixels");
 	mvnFG = getMvn(fgdPxls);
 
+	Logger::Instance()->writeToLog("Processing FG2 Pixels");
+	mvnFG2 = getMvn(prFgdPxls);
+
 	int rows = image->rows;
 	int cols = image->cols;
 
 	int i, j;
-	int countBG = 0, countFG = 0;
-	Vec3b black(0, 0, 0);
+	int countBG = 0, countFG = 0, countFG2 = 0;
+	Vec3b blue(255, 0, 0);
+	Vec3b pink(230, 130, 255);
+	Vec3b red(0, 0, 255);
 	cout << rows << endl;
 	for (i = 0; i < rows; ++i)
 	{
@@ -232,15 +249,24 @@ void GCApplication::processSeeds() {
 			test << static_cast<double>(value[B_CHANNEL]), static_cast<double>(value[G_CHANNEL]), static_cast<double>(value[R_CHANNEL]);
 			double result1 = mvnBG.pdf(test);
 			double result2 = mvnFG.pdf(test);
-			clog << "BG result: " << setprecision(30) << result1 << " FB result: " << result2 << endl;
-			if (result1 < result2) {
-				mvn_mask.at<Vec3b>(i, j) = black;
+			double result3 = mvnFG2.pdf(test);
+			clog << "BG result: " << setprecision(30) << result1 << " FB result: " << result2 << " FB2 result: " << result3 << endl;
+			int v = compareValues3(result1, result2, result3);
+			switch (v)
+			{
+			case 1: // Background
+				mvn_mask.at<Vec3b>(i, j) = blue;
 				countBG++;
-			}
-			else {
+				break;
+			case 2: //Object 1
+				mvn_mask.at<Vec3b>(i, j) = red;
 				countFG++;
+				break;
+			case 3: //Object 2
+				mvn_mask.at<Vec3b>(i, j) = pink;
+				countFG2++;
+				break;
 			}
-
 		}
 
 		if (i % 100 == 0)
@@ -249,18 +275,19 @@ void GCApplication::processSeeds() {
 
 	clog << countBG << endl;
 	clog << countFG << endl;
+	clog << countFG2 << endl;
 
 	imwrite("mask_image.png", mvn_mask);
 	imshow("mask", mvn_mask);
-
+	Vec3b black(0, 0, 0);
 	for (i = 0; i < rows; ++i)
 	{
 		for (j = 0; j < cols; ++j)
 		{
-			if (mvn_mask.at<Vec3b>(i, j) == black) 
+			if (mvn_mask.at<Vec3b>(i, j) != blue)
 				mvn_result.at<Vec3b>(i, j) = image->at<Vec3b>(i, j);			
 			else			
-				mvn_result.at<Vec3b>(i, j) = black;			
+				mvn_result.at<Vec3b>(i, j) = black;
 		}
 	}
 
@@ -273,8 +300,8 @@ Mvn GCApplication::getMvn(vector<Point> seeds) {
 	char str[500];
 	Logger::Instance()->writeToLog("Calculating Mean");
 
+	//Obtener pixeles diferentes
 	set<Vec3b, lex_compare> setSeeds;
-
 	for (Point p : seeds) {
 
 		Vec3b value = (*image).at<Vec3b>(p);
@@ -285,16 +312,7 @@ Mvn GCApplication::getMvn(vector<Point> seeds) {
 	strcpy_s(str, "Total different pixels: ");
 	strcat_s(str, std::to_string(setSeeds.size()).c_str());
 
-	vector<Vec3b> uniqueSeeds;
-	set< Vec3b, lex_compare>::iterator it = setSeeds.begin();
-	while (it != setSeeds.end()) {
-
-		auto v = (*it);
-		Vec3b value(v[B_CHANNEL], v[G_CHANNEL], v[R_CHANNEL]);
-		uniqueSeeds.push_back(value);
-		it++;
-
-	}
+	vector<Vec3b> uniqueSeeds(setSeeds.begin(), setSeeds.end());
 
 	Logger::Instance()->writeToLog(str);
 
